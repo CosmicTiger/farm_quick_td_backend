@@ -1,10 +1,11 @@
 from typing import Annotated
-from contextlib import asynccontextmanager
+from contextlib import suppress, asynccontextmanager
 from collections.abc import AsyncGenerator
 
 import uvicorn
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from slowapi.middleware import SlowAPIMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,8 +13,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core import settings, get_settings
 from app.core.logger import f, logger
 from app.core.path_conf import STATIC_DIR
-from app.infrastructure import init_db
 from app.api.routers.routes import router
+from app.core.rate_limiting import limiter
+from app.infrastructure.datasource import init_db
 
 
 @asynccontextmanager
@@ -23,15 +25,20 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[any, any, any]:
         logger.info(f.renderText(message))
         if get_settings().DEBUG:
             logger.info(get_settings().check_env_variables)
+
+        logger.info("Initializing database connection")
+        await init_db()
+
         yield
+
         logger.info(f.renderText("Shutting down " + get_settings().PROJECT_NAME))
         if not get_settings().DEBUG:
             logger.info(
                 "Submitting logs to the cloud",
             )  # TODO(<CosmicTiger>): Pending implementation to send logs to AWS Cloud  # noqa: TD003, FIX002
 
-        logger.info(f.renderText("Initializing database connection"))
-        await init_db()
+        logger.info("Closing database connection")
+        get_settings().get_db_client.close()
     except Exception as e:  # noqa: BLE001
         logger.error(f.renderText("Error during lifespan: " + str(e)))
         if not get_settings().DEBUG:
@@ -54,7 +61,9 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
 )
+app.state.limiter = limiter
 
+app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_settings().ALLOWED_CORS_ORIGIN,
@@ -80,6 +89,7 @@ async def root() -> HTMLResponse:
 async def healthcheck(settings: Annotated[settings.Settings, Depends(get_settings)]) -> HTMLResponse:
     try:
         status = settings.get_health_status
+        status["database_connection"] = await settings.get_ping_pong_db
         status_text = ""
 
         for key, value in status.items():
@@ -98,7 +108,7 @@ async def healthcheck(settings: Annotated[settings.Settings, Depends(get_setting
                 <h1 style="color: green;">System Status: Healthy</h1>
                 {status_text}
                 <h2>Docs Access</h2>
-                <p><a href="/docs">Swagger UI</a></p>
+                <p><a href="/docs">Swagger Docs</a></p>
             </body>
         </html>
         """,
@@ -124,7 +134,7 @@ async def healthcheck(settings: Annotated[settings.Settings, Depends(get_setting
 def overridden_swagger(req: Request) -> HTMLResponse:
     return get_swagger_ui_html(
         openapi_url="/openapi.json",
-        title=get_settings().PROJECT_NAME + " API Docs",
+        title=get_settings().PROJECT_NAME + " Docs",
         swagger_favicon_url="/static/images/QuickTD-Icon-2.png",
         swagger_ui_parameters={"defaultModelsExpandDepth": -1},
     )
@@ -139,12 +149,13 @@ def start() -> None:
     With the first param being the app itself, the app should go as an import\
     in order to be run by poetry as script
     """
-    uvicorn.run(
-        "app.main:app",
-        host=settings.HOST,
-        port=settings.PORT,
-        reload=settings.DEBUG,
-    )
+    with suppress(KeyboardInterrupt):
+        uvicorn.run(
+            "app.main:app",
+            host=settings.HOST,
+            port=settings.PORT,
+            reload=settings.DEBUG,
+        )
 
 
 if __name__ == "__main__":

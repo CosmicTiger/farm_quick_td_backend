@@ -1,8 +1,11 @@
 from fastapi import APIRouter
 
+from app.api.routers.auth.auth_routes import auth_router
+from app.api.routers.user.user_routes import user_router
+
 router = APIRouter()
 
-routers = []
+routers = [auth_router, user_router]
 
 
 for route in routers:

@@ -3,6 +3,7 @@ from typing import Literal
 from psutil import disk_usage, cpu_percent, virtual_memory
 from pydantic import Field, AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 from app import __version__
 
@@ -34,9 +35,10 @@ class Settings(BaseSettings):
     DATABASE_URL: str = Field("sqlite:///./app.db")
     DB_TYPE: str = Field("sqlite")
     JWT_SECRET_KEY: str = Field("default_secret_key")
+    JWT_REFRESH_SECRET_KEY: str = Field("default_refresh_secret_key")
     JWT_ALGORITHM: str = "HS256"
-    JWT_EXPIRATION_TIME: int = 15
-    JWT_REFRESH_EXPIRATION_TIME: int = 60 * 24 * 7
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
     MAINTAINERS_EMAILS: str = Field("luisangelmarcia@gmail.com")
 
@@ -48,7 +50,7 @@ class Settings(BaseSettings):
     # Logger Settings
     LOGGER_LEVEL: str = Field("INFO")
     LOGGER_FORMAT: str = Field(
-        "%(asctime)s - line:%(lineno)d - %(name)s - %(levelname)s - %(message)s",
+        "%(asctime)s - line:%(lineno)d - %(name)s - %(levelname)s - %(message)s - %(funcName)s - %(pathname)s",
     )
     LOGGER_FILE_NAME: str = Field("logger.log")
 
@@ -78,6 +80,61 @@ class Settings(BaseSettings):
         return env_variables_str
 
     @property
+    def get_db_client(self) -> AsyncIOMotorClient | None:
+        """get_db_client _summary_
+
+        _extended_summary_
+
+        :return: _description_
+        :rtype: _type_
+        """
+        db_client = None
+        if self.DB_TYPE == "mongodb":
+            db_client = AsyncIOMotorClient(self.DATABASE_URL)
+
+        elif self.DB_TYPE == "sqlite":
+            # SQLite initialization logic can be added here if needed | TODO: <CosmicTiger>: Pending implementation
+            db_client = None
+        return db_client
+
+    @property
+    def get_database(self) -> AsyncIOMotorDatabase | None:
+        """get_database _summary_
+
+        _extended_summary_
+
+        :return: _description_
+        :rtype: _type_
+        """
+        db_client = self.get_db_client
+        if db_client and self.DB_TYPE == "mongodb":
+            return db_client.get_default_database()
+        return None
+
+    @property
+    async def get_ping_pong_db(self) -> bool:
+        """get_ping_pong_db _summary_
+
+        _extended_summary_
+
+        :return: _description_
+        :rtype: bool
+        """
+        database = self.get_database
+        if database is not None and self.DB_TYPE == "mongodb":
+            try:
+                pong = await database.command("ping")
+
+                if pong["ok"] == 1:
+                    return "Up"
+
+                return "Down"
+            except Exception as error:  # noqa: BLE001
+                print(f"Error pinging database: {error}")
+                return "Not reachable"
+        return "Not Connected"
+
+    @property
     def get_health_status(self) -> dict[str, dict[str, str | None] | str | float]:
         """get_health_status _summary_
 
@@ -94,6 +151,7 @@ class Settings(BaseSettings):
             "cpu_usage": cpu_percent(interval=1),
             "memory_usage": virtual_memory().percent,
             "disk_usage": disk_usage("/").percent,
+            "database": self.DB_TYPE,
         }
 
     @property
@@ -116,7 +174,7 @@ class Settings(BaseSettings):
         :return: _description_
         :rtype: str
         """
-        return f"/api/v/{self.API_VERSION}"
+        return "/api/v1"
 
     @property
     def get_formatted_version(self) -> str:
@@ -207,10 +265,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-print(
-    f"""
-    Settings loaded:
-    {settings.check_env_variables}
-    """,
-)
