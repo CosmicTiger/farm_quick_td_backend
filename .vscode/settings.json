@@ -27,6 +27,7 @@
     "bzr",
     "direnv",
     "ipynb",
+    "mongodb",
     "mypy",
     "nox",
     "Pydoc",

@@ -30,6 +30,14 @@ class Settings(BaseSettings):
     ALLOWED_METHODS: list[str] = ["*"]
     ALLOWED_HEADERS: list[str] = ["*"]
 
+    # Database Configuration and Authentication Configurations
+    DATABASE_URL: str = Field("sqlite:///./app.db")
+    DB_TYPE: str = Field("sqlite")
+    JWT_SECRET_KEY: str = Field("default_secret_key")
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRATION_TIME: int = 15
+    JWT_REFRESH_EXPIRATION_TIME: int = 60 * 24 * 7
+
     MAINTAINERS_EMAILS: str = Field("luisangelmarcia@gmail.com")
 
     # Timeouts and intervals of delays
@@ -42,7 +50,7 @@ class Settings(BaseSettings):
     LOGGER_FORMAT: str = Field(
         "%(asctime)s - line:%(lineno)d - %(name)s - %(levelname)s - %(message)s",
     )
-    LOGGER_FILE_NAME: str = Field("nuop-utils.log")
+    LOGGER_FILE_NAME: str = Field("logger.log")
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -108,7 +116,18 @@ class Settings(BaseSettings):
         :return: _description_
         :rtype: str
         """
-        return f"/api/{self.API_VERSION}"
+        return f"/api/v/{self.API_VERSION}"
+
+    @property
+    def get_formatted_version(self) -> str:
+        """get_formatted_version _summary_
+
+        _extended_summary_
+
+        :return: _description_
+        :rtype: str
+        """
+        return f"v{self.API_VERSION}"
 
     @field_validator("API_VERSION", mode="before")
     @classmethod

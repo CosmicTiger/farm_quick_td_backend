@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+  "beanie>=1.29.0",
   "fastapi[standard]>=0.115.12",
   "pathlib>=1.0.1",
   "psutil>=7.0.0",
