@@ -27,6 +27,7 @@
     "bzr",
     "direnv",
     "ipynb",
+    "jose",
     "mongodb",
     "mypy",
     "nox",
@@ -36,6 +37,7 @@
     "pytest-cov",
     "pytest-xdist",
     "pytype",
+    "slowapi",
     "tox"
   ]
 }
