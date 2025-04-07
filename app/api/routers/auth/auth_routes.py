@@ -6,9 +6,10 @@ from pydantic import ValidationError
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.security import create_access_token, create_refresh_token, verify_refresh_token
+from app.domain.entities.user import User
 from app.services.user_service import UserService
 from app.schemas.pydantic.auth_schemas import TokenSchema, TokenPayload
-from app.schemas.pydantic.common_schemas import CommonResponse
+from app.api.routers.dependencies.user_deps import get_current_user
 
 auth_router = APIRouter(
     prefix="/auth",
@@ -19,7 +20,10 @@ auth_router = APIRouter(
 
 
 @auth_router.post("/login", summary="Sign in user")
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> CommonResponse[TokenSchema]:
+async def login(
+    service: Annotated[UserService, Depends()],
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+) -> TokenSchema:
     """Sign in user.
 
     Args:
@@ -29,11 +33,10 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> C
         dict: Sign-in response.
     """
     try:
-        user = await UserService().authenticate_user(form_data.username, form_data.password)
+        user = await service.authenticate_user(form_data.username, form_data.password)
         if not user:
             return None
-        return {
-            "message": "User logged in successfully",
+        return  {
             "access_token": create_access_token(user.id),
             "refresh_token": create_refresh_token(user.id),
         }
@@ -46,9 +49,18 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> C
         ) from error
 
 
+@auth_router.post("/test-token", summary="Test if the access token is valid")
+async def test_token(user: Annotated[User, Depends(get_current_user)]):
+    return user
+
+
 @auth_router.post("/refresh", summary="Refresh token")
 # @limiter.limit("5/minute")
-async def refresh_token(request: Request, refresh_token: str) -> CommonResponse[TokenSchema]:
+async def refresh_token(
+    request: Request,
+    refresh_token: str,
+    service: Annotated[UserService, Depends()],
+) -> TokenSchema:
     """Refresh token.
 
     Args:
@@ -61,17 +73,14 @@ async def refresh_token(request: Request, refresh_token: str) -> CommonResponse[
         payload = verify_refresh_token(refresh_token)
 
         token_data = TokenPayload(**payload)
-        user = await UserService().get_user_by_id(token_data.sub)
+        user = await service.get_user_by_id(token_data.sub)
 
         if not user:
             raise Exception("Invalid token for user")  # noqa: TRY301, TRY002
 
         return {
-            "message": "Token refreshed successfully",
-            "result": {
-                "access_token": create_access_token(user.id),
-                "refresh_token": create_refresh_token(user.id),
-            },
+            "access_token": create_access_token(user.id),
+            "refresh_token": create_refresh_token(user.id),
         }
     except (jwt.JWTError, ValidationError) as error:
         raise HTTPException(

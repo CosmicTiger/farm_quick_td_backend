@@ -1,17 +1,29 @@
+from typing import Annotated
 from datetime import UTC, datetime
 
 from jose import jwt
 from fastapi import Depends, HTTPException, status
 from pydantic import ValidationError
+from fastapi.security import OAuth2PasswordBearer
 
 from app.core import get_settings
-from app.core.security import oauth2_bearer
 from app.domain.entities.user import User
 from app.services.user_service import UserService
 from app.schemas.pydantic.auth_schemas import TokenPayload
 
+oauth2_bearer = OAuth2PasswordBearer(
+    tokenUrl=f"{get_settings().get_api_prefix}/auth/login",
+    scheme_name="JWT",
+    description="JWT Bearer Token",
+)
 
-async def get_current_user(token: str = Depends(oauth2_bearer)) -> User:
+print(f"{get_settings().get_api_prefix}/auth/login")
+
+
+async def get_current_user(
+    service: Annotated[UserService, Depends()],
+    token: Annotated[str, Depends(oauth2_bearer)],
+) -> User:
     try:
         payload = jwt.decode(
             token,
@@ -33,7 +45,7 @@ async def get_current_user(token: str = Depends(oauth2_bearer)) -> User:
             headers={"WWW-Authenticate": "Bearer"},
         ) from error
 
-    user = await UserService().get_user_by_id(token_data.sub)
+    user = await service.get_user_by_id(token_data.sub)
 
     if not user:
         raise HTTPException(

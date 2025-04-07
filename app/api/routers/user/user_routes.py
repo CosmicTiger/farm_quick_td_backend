@@ -1,11 +1,15 @@
-from fastapi import Request, APIRouter, HTTPException, status
+from typing import Annotated
+
+from fastapi import Depends, Request, APIRouter, HTTPException, status
 from pydantic import ValidationError
 
 from app.main import logger
 from app.core.rate_limiting import limiter
+from app.domain.entities.user import User
 from app.services.user_service import UserService
-from app.api.routers.auth.auth_routes import CommonResponse
 from app.schemas.pydantic.user_schemas import UserRead, UserCreate, UserUpdate, UserUpdatePassword
+from app.schemas.pydantic.common_schemas import CommonResponse
+from app.api.routers.dependencies.user_deps import get_current_user
 
 user_router = APIRouter(
     prefix="/user",
@@ -21,7 +25,7 @@ user_router = APIRouter(
     response_description="User information",
 )
 @limiter.limit("5/hour")
-async def create_user(request: Request, user_data: UserCreate) -> UserRead:
+async def create_user(request: Request, user_data: UserCreate, service: Annotated[UserService, Depends()]) -> UserRead:
     """create_user _summary_
 
     _extended_summary_
@@ -36,7 +40,7 @@ async def create_user(request: Request, user_data: UserCreate) -> UserRead:
     :rtype: UserRead
     """
     try:
-        return await UserService().create_user(user_data)
+        return await service.create_user(user_data)
     except ValidationError as validation_error:
         msg = f"User creation failed, validation error: {validation_error}"
         logger.error(msg)
@@ -61,13 +65,13 @@ async def create_user(request: Request, user_data: UserCreate) -> UserRead:
     response_description="User information",
     response_model=dict,
 )
-async def get_me() -> UserRead:
+async def get_me(current_user: Annotated[User, Depends(get_current_user)]) -> UserRead:
     """Get user information.
 
     Returns:
         dict: User information.
     """
-    return {"user": "user information"}
+    return current_user.model_dump(exclude={"password", "hashed_password"})
 
 
 @user_router.patch(
@@ -76,7 +80,12 @@ async def get_me() -> UserRead:
     response_description="User password updated successfully",
 )
 @limiter.limit("2/hour")
-async def update_user_password(request: Request, user_id: str, new_password_payload: UserUpdatePassword) -> dict:
+async def update_user_password(
+    request: Request,
+    user_id: str,
+    new_password_payload: UserUpdatePassword,
+    service: Annotated[UserService, Depends()],
+) -> dict:
     """Update user password.
 
     Args:
@@ -86,7 +95,7 @@ async def update_user_password(request: Request, user_id: str, new_password_payl
         dict: User password updated successfully.
     """
     try:
-        result = await UserService().update_user_password(user_id, new_password_payload)
+        result = await service.update_user_password(user_id, new_password_payload)
         return {"message": "User password updated successfully" if result else "User password update failed"}
     except ValidationError as validation_error:
         msg = f"User password update failed, validation error: {validation_error}"
@@ -112,9 +121,14 @@ async def update_user_password(request: Request, user_id: str, new_password_payl
     response_description="User information updated successfully",
 )
 @limiter.limit("1/hour")
-async def update_user_info(request: Request, user_id: str, user_data: UserUpdate) -> CommonResponse[UserRead]:
+async def update_user_info(
+    request: Request,
+    user_id: str,
+    user_data: UserUpdate,
+    service: Annotated[UserService, Depends()],
+) -> CommonResponse[UserRead]:
     try:
-        updated_user = await UserService().update_user(user_id, user_data)
+        updated_user = await service.update_user(user_id, user_data)
         return {"message": "User information updated successfully", "result": updated_user}
     except ValidationError as validation_error:
         msg = f"User update failed, validation error: {validation_error}"
@@ -139,9 +153,9 @@ async def update_user_info(request: Request, user_id: str, user_data: UserUpdate
     summary="Change user logical status",
     response_description="User information restored/deleted successfully",
 )
-async def delete_user(user_id: str) -> dict:
+async def delete_user(user_id: str, service: Annotated[UserService, Depends()]) -> dict:
     try:
-        result = await UserService().delete_user(user_id)
+        result = await service.delete_user(user_id)
         return {
             "message": "User deleted successfully" if result is False else "User restored successfully",
         }
