@@ -1,0 +1,40 @@
+{
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.completeFunctionParens": true,
+  "python.analysis.indexing": false,
+  "python.analysis.packageIndexDepths": [
+    {
+      "depth": 2,
+      "includeAllSymbols": true,
+      "name": ""
+    }
+  ],
+
+  "python.analysis.extraPaths": ["${workspaceFolder}/"],
+  "python.autoComplete.extraPaths": ["${workspaceFolder}/"],
+  "python.analysis.typeCheckingMode": "off",
+  "ruff.nativeServer": "auto",
+  "python.languageServer": "Pylance",
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    }
+  },
+  "cSpell.words": [
+    "bzr",
+    "direnv",
+    "ipynb",
+    "mypy",
+    "nox",
+    "Pydoc",
+    "pydocstyle",
+    "pytest",
+    "pytest-cov",
+    "pytest-xdist",
+    "pytype",
+    "tox"
+  ]
+}

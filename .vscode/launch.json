@@ -1,0 +1,40 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python Debugger: Pytest Specific file Without Warnings",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["-p", "no:warnings", "${relativeFileDirname}"],
+      "jinja": false,
+      "justMyCode": true,
+      "env": {
+        "PORT": "8087"
+      }
+    },
+    {
+      "name": "Python Debugger: Pytest Specific file With Warnings",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["${relativeFileDirname}"],
+      "jinja": false,
+      "justMyCode": true,
+      "env": {
+        "PORT": "8087"
+      }
+    },
+    {
+      "name": "Python Debugger: FastAPI (uvicorn)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["app.main:app", "--port", "8087", "--reload"],
+      "jinja": true
+    }
+  ]
+}
