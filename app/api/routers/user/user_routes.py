@@ -75,14 +75,14 @@ async def get_me(current_user: Annotated[User, Depends(get_current_user)]) -> Us
 
 
 @user_router.patch(
-    "/update_password/{user_id}",
+    "/update_password",
     summary="Update user password",
     response_description="User password updated successfully",
 )
 @limiter.limit("2/hour")
 async def update_user_password(
     request: Request,
-    user_id: str,
+    current_user: Annotated[User, Depends(get_current_user)],
     new_password_payload: UserUpdatePassword,
     service: Annotated[UserService, Depends()],
 ) -> dict:
@@ -95,7 +95,7 @@ async def update_user_password(
         dict: User password updated successfully.
     """
     try:
-        result = await service.update_user_password(user_id, new_password_payload)
+        result = await service.update_user_password(current_user.id, new_password_payload)
         return {"message": "User password updated successfully" if result else "User password update failed"}
     except ValidationError as validation_error:
         msg = f"User password update failed, validation error: {validation_error}"
@@ -116,19 +116,19 @@ async def update_user_password(
 
 
 @user_router.put(
-    "/update/{user_id}",
+    "/update-info",
     summary="Update user information",
     response_description="User information updated successfully",
 )
 @limiter.limit("1/hour")
 async def update_user_info(
     request: Request,
-    user_id: str,
+    current_user: Annotated[User, Depends(get_current_user)],
     user_data: UserUpdate,
     service: Annotated[UserService, Depends()],
 ) -> CommonResponse[UserRead]:
     try:
-        updated_user = await service.update_user(user_id, user_data)
+        updated_user = await service.update_user(current_user.id, user_data)
         return {"message": "User information updated successfully", "result": updated_user}
     except ValidationError as validation_error:
         msg = f"User update failed, validation error: {validation_error}"
@@ -149,13 +149,16 @@ async def update_user_info(
 
 
 @user_router.patch(
-    "/delete/{user_id}",
+    "/change-status",
     summary="Change user logical status",
     response_description="User information restored/deleted successfully",
 )
-async def delete_user(user_id: str, service: Annotated[UserService, Depends()]) -> dict:
+async def delete_user(
+    current_user: Annotated[User, Depends(get_current_user)],
+    service: Annotated[UserService, Depends()],
+) -> dict:
     try:
-        result = await service.delete_user(user_id)
+        result = await service.delete_user(current_user.id)
         return {
             "message": "User deleted successfully" if result is False else "User restored successfully",
         }
