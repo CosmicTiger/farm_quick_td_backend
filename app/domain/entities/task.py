@@ -1,37 +1,16 @@
-from enum import Enum
 from uuid import UUID, uuid4
 from datetime import datetime
 
 from pydantic import Field, BaseModel
 
-
-class TaskStatus(str, Enum):
-    """Task status enum."""
-
-    BACKLOG = 0
-    TODO = 1
-    IN_PROGRESS = 2
-    DONE = 3
-    CANCELLED = 4
-    DUPLICATE = 5
+from app.domain.entities.task_enum import Priority, TaskStatus, SubTaskRelationType
 
 
-class Priority(str, Enum):
-    """Priority _summary_
+class SubTask(BaseModel):
+    """SubTask entity."""
 
-    _extended_summary_
-
-    :param str: _description_
-    :type str: _type_
-    :param Enum: _description_
-    :type Enum: _type_
-    """
-
-    NO_PRIORITY = 0
-    URGENT = 1
-    HIGH = 2
-    MEDIUM = 3
-    LOW = 4
+    id: UUID = Field(default_factory=lambda: uuid4())
+    relation_type: str = Field(default=SubTaskRelationType.RELATES_TO)
 
 
 class Task(BaseModel):
@@ -39,11 +18,18 @@ class Task(BaseModel):
 
     id: UUID = Field(default_factory=lambda: uuid4())
     title: str = Field(..., min_length=2, max_length=100)
-    description: str = Field(..., min_length=2, max_length=500)
-    status: TaskStatus = Field(default=TaskStatus.TODO)
+    description: str = Field(
+        ...,
+        min_length=2,
+        max_length=500,
+        description="Task description",
+    )
+    status: TaskStatus = Field(default=TaskStatus.DRAFT)
     priority: Priority = Field(default=Priority.NO_PRIORITY)
     is_archived: bool = Field(default=False)
     user_id: UUID = Field(...)
+    assigned_user_id: UUID = Field(default=None)
+    sub_tasks: list[SubTask] = Field(default_factory=list[SubTask])
     due_date: datetime = Field(...)
     created_at: datetime = Field(...)
     updated_at: datetime = Field(...)
