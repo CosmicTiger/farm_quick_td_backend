@@ -102,6 +102,30 @@ class UserService:
             logger.error(msg)
             raise
 
+    async def find_user_by_email(self, email: str) -> User:
+        """find_user_by_email _summary_
+
+        _extended_summary_
+
+        :param email: _description_
+        :type email: str
+        :raises ValueError: _description_
+        :return: _description_
+        :rtype: User
+        """
+        try:
+            user = await self.user_repository.find_user_by_email(email)
+
+            if not user:
+                logger.warning(f"[UserService] - User not found with: {email}")
+                raise ValueError("User not found")  # noqa: TRY301
+
+            return to_entity_from_beanie(user)
+        except Exception as e:
+            msg = f"[UserService] - User search by email failed, error: {e}"
+            logger.error(msg)
+            raise
+
     async def update_user_password(self, user_id: str, new_password_payload: UserUpdatePassword) -> bool:
         """update_user_password _summary_
 
