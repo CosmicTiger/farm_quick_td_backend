@@ -4,16 +4,19 @@ from collections.abc import AsyncGenerator
 
 import uvicorn
 from fastapi import Depends, FastAPI, Request
+from scalar_fastapi import get_scalar_api_reference
 from fastapi.responses import HTMLResponse, RedirectResponse
 from slowapi.middleware import SlowAPIMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.middleware.cors import CORSMiddleware
+from scalar_fastapi.scalar_fastapi import Layout
 
 from app.core import settings, get_settings
 from app.core.logger import f, logger
 from app.core.path_conf import STATIC_DIR
 from app.api.routers.routes import router
+from app.core.docs_metadata import tags_metadata
+from app.core.docs_settings import load_theme_css
 from app.core.rate_limiting import limiter
 from app.infrastructure.datasource import init_db
 
@@ -40,7 +43,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[any, any, any]:
         logger.info("Closing database connection")
         get_settings().get_db_client.close()
     except Exception as e:  # noqa: BLE001
-        logger.error(f.renderText("Error during lifespan: " + str(e)))
+        logger.error("Error during lifespan: " + str(e))
         if not get_settings().DEBUG:
             logger.error(
                 "Submitting logs to the cloud",
@@ -58,6 +61,7 @@ app = FastAPI(
     },
     description=get_settings().PROJECT_DESCRIPTION,
     version=get_settings().get_formatted_version,
+    openapi_tags=tags_metadata,
     docs_url=None,
     redoc_url=None,
 )
@@ -85,7 +89,7 @@ async def root() -> HTMLResponse:
     )
 
 
-@app.get("/healthcheck", response_class=HTMLResponse)
+@app.get("/healthcheck", tags=["System"], response_class=HTMLResponse)
 async def healthcheck(settings: Annotated[settings.Settings, Depends(get_settings)]) -> HTMLResponse:
     try:
         status = settings.get_health_status
@@ -132,11 +136,14 @@ async def healthcheck(settings: Annotated[settings.Settings, Depends(get_setting
 
 @app.get("/docs", include_in_schema=False)
 def overridden_swagger(req: Request) -> HTMLResponse:
-    return get_swagger_ui_html(
-        openapi_url="/openapi.json",
-        title=get_settings().PROJECT_NAME + " Docs",
-        swagger_favicon_url="/static/images/QuickTD-Icon-2.png",
-        swagger_ui_parameters={"defaultModelsExpandDepth": -1},
+    return get_scalar_api_reference(
+        openapi_url=app.openapi_url,
+        title=app.title,
+        scalar_favicon_url="/static/images/QuickTD-Icon-2.png",
+        dark_mode=True,
+        scalar_theme=load_theme_css(),
+        show_sidebar=True,
+        layout=Layout.MODERN,
     )
 
 
