@@ -66,7 +66,12 @@ class TaskService:
         :rtype: list[TaskRead]
         """
         try:
-            tasks = await self.task_repository.list_tasks(build_beanie_filter(task_filters), task_sorts, page, offset)
+            tasks = await self.task_repository.list_tasks(
+                build_beanie_filter(task_filters) if task_filters else None,
+                task_sorts,
+                page,
+                offset,
+            )
             return tasks
         except Exception as e:
             msg = f"[TaskService] - Task listing failed, error: {e}"
@@ -124,7 +129,7 @@ class TaskService:
         :rtype: TaskRead
         """
         try:
-            task = await self.task_repository.update_task(current_user.id, task_id, task_data)
+            task = await self.task_repository.update_task(current_user, task_id, task_data)
             return task
         except Exception as e:
             msg = f"[TaskService] - Task update failed, error: {e}"
@@ -142,7 +147,7 @@ class TaskService:
         :rtype: TaskRead
         """
         try:
-            task = await self.task_repository.update_task(current_user.id, task_id, {"is_archive_process": True})
+            task = await self.task_repository.update_task(current_user, task_id)
             return task
         except Exception as e:
             msg = f"[TaskService] - Task archiving failed, error: {e}"

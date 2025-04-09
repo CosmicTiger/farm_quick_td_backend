@@ -1,8 +1,10 @@
 import pymongo
 from pymongo.errors import OperationFailure, DuplicateKeyError
+from beanie.operators import Set
 
 from app.core.logger import logger
 from app.domain.entities.user import User
+from app.services.task_service import TaskUpdate
 from app.schemas.pydantic.task_schemas import TaskRead, TaskCreate
 from app.domain.datasource.task_datasource import ITaskDatasource
 from app.infrastructure.mappers.task_mapper import to_beanie_task_from_schema_task_create
@@ -131,7 +133,7 @@ class BeanieTaskDatasource(ITaskDatasource):
             logger.error(msg)
             raise OperationFailure(msg) from e
 
-    async def update_task(self, task_id: str, task_data: dict) -> TaskRead:
+    async def update_task(self, current_user: User, task_id: str, task_data: dict | TaskUpdate) -> TaskRead:
         """update_task _summary_
 
         _extended_summary_
@@ -148,17 +150,20 @@ class BeanieTaskDatasource(ITaskDatasource):
         if not task:
             raise OperationFailure("Task not found")
 
-        task_data_to_update = {}
+        task_data_to_update = (
+            task_data.model_dump(exclude_unset=True) if isinstance(task_data, TaskUpdate) else task_data
+        )
 
-        if task_data.get("is_archived_process"):
+        # The only case this happens is if task is being archived
+        if isinstance(task_data, dict) and task_data.get("is_archived_process"):
             task_data_to_update["is_archived"] = task.is_archived
 
         task_data_to_update = {
             **task_data_to_update,
-            **task_data,
+            "updated_by": current_user,
         }
 
-        task.update(**task_data_to_update)
+        await task.update(Set(task_data_to_update))
         await task.save()
         return task
 

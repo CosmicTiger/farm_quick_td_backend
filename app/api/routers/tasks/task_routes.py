@@ -122,18 +122,18 @@ async def update_task(
     task_data: TaskUpdate,
 ) -> CommonResponse[TaskRead]:
     try:
-        retrieved_task = await service.get_task_by_id(task_id)
+        updated_task = await service.update_task(task_id, current_user, task_data)
         return {
-            "message": "Task created successfully.",
-            "result": retrieved_task,
+            "message": "Task updated successfully.",
+            "result": updated_task,
         }
     except Exception as error:
-        msg = f"Task retrieval failed, error: {error}"
+        msg = f"Task update failed, error: {error}"
         logger.error(msg)
         raise HTTPException(
             status_code=500,
-            detail="Task retrieval failed",
-            headers={"X-Error": "Task retrieval failed"},
+            detail="Task update failed",
+            headers={"X-Error": "Task update failed"},
         ) from error
 
 
@@ -150,7 +150,7 @@ async def archive_task(
     try:
         retrieved_task = await service.archive_task(task_id, current_user)
         return {
-            "message": "Task created successfully.",
+            "message": "Task has been archived successfully.",
             "result": retrieved_task,
         }
     except Exception as error:
@@ -174,16 +174,16 @@ async def delete_task(
     task_id: str,
 ) -> CommonResponse[TaskRead]:
     try:
-        retrieved_task = await service.get_task_by_id(task_id)
+        retrieved_task = await service.delete_task(task_id)
         return {
-            "message": "Task created successfully.",
+            "message": "Task deleted successfully.",
             "result": retrieved_task,
         }
     except Exception as error:
-        msg = f"Task retrieval failed, error: {error}"
+        msg = f"Task deletion attempt failed, error: {error}"
         logger.error(msg)
         raise HTTPException(
             status_code=500,
-            detail="Task retrieval failed",
-            headers={"X-Error": "Task retrieval failed"},
+            detail="Task deletion attempt failed",
+            headers={"X-Error": "Task deletion attempt failed"},
         ) from error

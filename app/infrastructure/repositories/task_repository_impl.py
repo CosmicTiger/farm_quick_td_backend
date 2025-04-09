@@ -39,8 +39,8 @@ class TaskRepositoryImpl(ITaskRepository):
     async def list_tasks_by_filter(self, task_filter):
         return await self.datasource.list_tasks_by_filter(task_filter)
 
-    async def update_task(self, task_id: str, task_data: dict):
-        return await self.datasource.update_task(task_id, task_data)
+    async def update_task(self, current_user, task_id: str, task_data: dict):
+        return await self.datasource.update_task(current_user, task_id, task_data)
 
     async def delete_task(self, task_id: str):
         return await self.datasource.delete_task(task_id)
