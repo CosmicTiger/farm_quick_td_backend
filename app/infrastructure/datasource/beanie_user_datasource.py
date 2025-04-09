@@ -2,9 +2,12 @@ from pymongo.errors import OperationFailure, DuplicateKeyError
 
 from app.core.logger import logger
 from app.domain.entities.user import User
-from app.services.user_service import UserCreate
+from app.schemas.pydantic.user_schemas import UserCreate
 from app.domain.datasource.user_datasource import IUserDatasource
-from app.infrastructure.mappers.user_mapper import to_user_from_schema, to_beanie_from_entity
+from app.infrastructure.mappers.user_mapper import (
+    to_beanie_user_from_entity_user,
+    to_entity_user_from_schema_create_user,
+)
 from app.infrastructure.models.odm.beanie_user_model import BeanieUser
 
 
@@ -29,8 +32,8 @@ class BeanieUserDatasource(IUserDatasource):
         :rtype: User
         """
         try:
-            data_to_user = to_user_from_schema(data)
-            user = to_beanie_from_entity(data_to_user)
+            data_to_user = to_entity_user_from_schema_create_user(data)
+            user = to_beanie_user_from_entity_user(data_to_user)
             await user.save()
             return user
         except DuplicateKeyError:

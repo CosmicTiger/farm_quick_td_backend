@@ -2,7 +2,7 @@ from app.core.logger import logger
 from app.core.security import get_password, verify_password
 from app.domain.entities.user import User
 from app.schemas.pydantic.user_schemas import UserRead, UserCreate, UserUpdate, UserUpdatePassword
-from app.infrastructure.mappers.user_mapper import to_entity_from_beanie
+from app.infrastructure.mappers.user_mapper import to_entity_user_from_beanie_user
 from app.infrastructure.datasource.beanie_user_datasource import BeanieUserDatasource
 from app.infrastructure.repositories.user_repository_impl import UserRepositoryImpl
 
@@ -71,7 +71,7 @@ class UserService:
             user = await self.user_repository.get_user_by_id(user_id)
             if not user:
                 raise ValueError("User not found")  # noqa: TRY301
-            return to_entity_from_beanie(user)
+            return to_entity_user_from_beanie_user(user)
         except Exception as e:
             msg = f"[UserService] - User retrieval failed, error: {e}"
             logger.error(msg)
@@ -96,7 +96,7 @@ class UserService:
                 logger.warning(f"[UserService] - Failed authentication attempt for: {email}")
                 raise ValueError("Invalid credentials")  # noqa: TRY301
 
-            return to_entity_from_beanie(user)
+            return to_entity_user_from_beanie_user(user)
         except Exception as e:
             msg = f"[UserService] - User authentication failed, error: {e}"
             logger.error(msg)
@@ -120,7 +120,7 @@ class UserService:
                 logger.warning(f"[UserService] - User not found with: {email}")
                 raise ValueError("User not found")  # noqa: TRY301
 
-            return to_entity_from_beanie(user)
+            return to_entity_user_from_beanie_user(user)
         except Exception as e:
             msg = f"[UserService] - User search by email failed, error: {e}"
             logger.error(msg)
@@ -150,7 +150,7 @@ class UserService:
 
             user.hashed_password = get_password(new_password_payload.new_password)
 
-            return await self.user_repository.update_user(user_id, to_entity_from_beanie(user))
+            return await self.user_repository.update_user(user_id, to_entity_user_from_beanie_user(user))
         except Exception as e:
             msg = f"[UserService] - User password update failed, error: {e}"
             logger.error(msg)

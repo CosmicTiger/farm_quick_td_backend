@@ -10,7 +10,7 @@ def test_create_valid_task() -> None:
     task = Task(
         title="Write tests",
         description="Write unit tests for Task entity",
-        user_id=uuid4(),
+        created_by_id=uuid4(),
         due_date=datetime.now(tz=UTC) + timedelta(days=2),
         created_at=datetime.now(tz=UTC),
         updated_at=datetime.now(tz=UTC),
@@ -27,8 +27,8 @@ def test_invalid_title_too_short() -> None:
         Task(
             title="A",
             description="Too short title",
-            user_id=uuid4(),
-            due_date=datetime.now(tz=UTC),
+            created_by_id=uuid4(),
+            due_date=datetime.now(tz=UTC) + timedelta(days=2),
             created_at=datetime.now(tz=UTC),
             updated_at=datetime.now(tz=UTC),
         )
@@ -42,8 +42,8 @@ def test_invalid_description_too_long() -> None:
         Task(
             title="Valid Title",
             description="x" * 501,
-            user_id=uuid4(),
-            due_date=datetime.now(tz=UTC),
+            created_by_id=uuid4(),
+            due_date=datetime.now(tz=UTC) + timedelta(days=2),
             created_at=datetime.now(tz=UTC),
             updated_at=datetime.now(tz=UTC),
         )
@@ -60,7 +60,7 @@ def test_task_equality_and_hash() -> None:
     task1 = Task(
         title="Same title",
         description="desc 1",
-        user_id=uid,
+        created_by_id=uid,
         due_date=now,
         created_at=now,
         updated_at=now,
@@ -69,7 +69,7 @@ def test_task_equality_and_hash() -> None:
     task2 = Task(
         title="Same title",
         description="desc 2",
-        user_id=uid,
+        created_by_id=uid,
         due_date=now,
         created_at=now,
         updated_at=now,

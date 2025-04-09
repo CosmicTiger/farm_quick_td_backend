@@ -1,5 +1,5 @@
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import UTC, datetime
 
 from pydantic import Field, BaseModel
 
@@ -7,10 +7,43 @@ from app.domain.entities.task_enum import Priority, TaskStatus, SubTaskRelationT
 
 
 class SubTask(BaseModel):
-    """SubTask entity."""
+    """SubTask entity"""
 
-    id: UUID = Field(default_factory=lambda: uuid4())
-    relation_type: str = Field(default=SubTaskRelationType.RELATES_TO)
+    id: UUID = Field(
+        default_factory=lambda: uuid4(),
+        title="SubTask ID",
+        description="Original ID of the task in the db",
+    )
+    title: str | None = Field(
+        default=None,
+        min_length=2,
+        max_length=100,
+        title="SubTask title",
+        description="Original title of the task in the db",
+    )
+    description: str | None = Field(
+        default=None,
+        min_length=2,
+        max_length=500,
+        title="Task description",
+        description="Original description of the task in the db",
+    )
+    due_date: datetime | None = Field(
+        default_factory=lambda: datetime.now(tz=UTC),
+        title="Due Date",
+        description="Original due date of the task in the db",
+    )
+    relation_type: SubTaskRelationType = Field(
+        default=SubTaskRelationType.RELATES_TO,
+        title="Relation Type",
+        description=(
+            "Relation Type:\n"
+            "- block: BLOCKS - The sub task blocks the main task\n"
+            "- depends_on: DEPENDS_ON - The sub task depends on the main task\n"
+            "- relates_to: RELATES_TO - The sub task relates to the main task\n"
+            "- duplicate: DUPLICATE - The sub task is a duplicate of the main task"
+        ),
+    )
 
 
 class Task(BaseModel):
@@ -27,12 +60,13 @@ class Task(BaseModel):
     status: TaskStatus = Field(default=TaskStatus.DRAFT)
     priority: Priority = Field(default=Priority.NO_PRIORITY)
     is_archived: bool = Field(default=False)
-    user_id: UUID = Field(...)
-    assigned_user_id: UUID = Field(default=None)
+    assigned_to: UUID = Field(default=None)
     sub_tasks: list[SubTask] = Field(default_factory=list[SubTask])
-    due_date: datetime = Field(...)
-    created_at: datetime = Field(...)
-    updated_at: datetime = Field(...)
+    due_date: datetime | None = Field(default_factory=lambda: datetime.now(tz=UTC))
+    created_by: UUID = Field(...)
+    updated_by: UUID | None = Field(default=None)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
 
     def __repr__(self) -> str:
         """__repr__ _summary_
