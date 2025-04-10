@@ -90,7 +90,7 @@ class Settings(BaseSettings):
         """
         db_client = None
         if self.DB_TYPE == "mongodb":
-            db_client = AsyncIOMotorClient(self.DATABASE_URL)
+            db_client = AsyncIOMotorClient(self.DATABASE_URL, uuidRepresentation="standard")
 
         elif self.DB_TYPE == "sqlite":
             # SQLite initialization logic can be added here if needed | TODO: <CosmicTiger>: Pending implementation

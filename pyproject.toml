@@ -17,6 +17,7 @@ dependencies = [
   "pyfiglet>=1.0.2",
   "python-decouple>=3.8",
   "python-jose[cryptography]>=3.4.0",
+  "scalar-fastapi>=1.0.3",
   "slowapi>=0.1.9",
   "uvicorn[standard]>=0.34.0",
 ]
@@ -28,6 +29,7 @@ dev = [
   "coverage>=7.8.0",
   "flake8>=7.2.0",
   "isort>=6.0.1",
+  "mongomock-motor>=0.0.35",
   "pre-commit>=4.2.0",
   "pylint>=3.3.6",
   "pylint-pydantic>=0.3.5",

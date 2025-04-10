@@ -2,6 +2,7 @@ from beanie import init_beanie
 
 from app.core import get_settings
 from app.core.logger import logger
+from app.infrastructure.models.odm.beanie_task_model import BeanieTask
 from app.infrastructure.models.odm.beanie_user_model import BeanieUser
 
 
@@ -13,7 +14,10 @@ async def init_mongo_db_instance() -> None:
         raise RuntimeError("MongoDB client not initialized.")
 
     try:
-        await init_beanie(database=db_client.quick_td_db, document_models=[BeanieUser])
+        await init_beanie(
+            database=db_client.quick_td_db,
+            document_models=[BeanieUser, BeanieTask],
+        )
     except Exception as e:
         msg = f"Failed to initialize Beanie ODM: {e}"
         logger.error(msg)

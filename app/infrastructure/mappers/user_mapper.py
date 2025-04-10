@@ -4,7 +4,7 @@ from app.schemas.pydantic.user_schemas import UserCreate
 from app.infrastructure.models.odm.beanie_user_model import BeanieUser
 
 
-def to_entity_from_beanie(doc: BeanieUser) -> User:
+def to_entity_user_from_beanie_user(doc: BeanieUser) -> User:
     return User(
         id=doc.id,
         email=doc.email,
@@ -16,7 +16,7 @@ def to_entity_from_beanie(doc: BeanieUser) -> User:
     )
 
 
-def to_beanie_from_entity(entity: User) -> BeanieUser:
+def to_beanie_user_from_entity_user(entity: User) -> BeanieUser:
     try:
         return BeanieUser(
             id=entity.id,
@@ -32,7 +32,7 @@ def to_beanie_from_entity(entity: User) -> BeanieUser:
         raise ValueError(msg) from e
 
 
-def to_user_from_schema(create_schema: UserCreate) -> User:
+def to_entity_user_from_schema_create_user(create_schema: UserCreate) -> User:
     return User(
         email=create_schema.email,
         username=create_schema.username,

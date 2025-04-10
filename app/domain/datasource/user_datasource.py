@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from app.domain.entities.user import User
-from app.services.user_service import UserCreate
+from app.schemas.pydantic.user_schemas import UserCreate
 
 
 class IUserDatasource(ABC):
