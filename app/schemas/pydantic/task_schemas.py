@@ -53,7 +53,7 @@ class TaskCreate(BaseModel):
         ),
     )
     sub_tasks: list[SubTask] = Field(
-        default_factory=list,
+        default=[],
         title="Sub Tasks",
         description="List of sub tasks",
     )
@@ -83,7 +83,7 @@ class TaskCreateWithMetadata(BaseModel):
     priority: Priority = Field(default=Priority.NO_PRIORITY, title="Priority")
     is_archived: bool = Field(default=False, title="Is Archived")
     sub_tasks: list[BeanieSubTask] = Field(
-        default_factory=list,
+        default=[],
         title="Sub Tasks",
         description="List of sub tasks",
     )
@@ -153,7 +153,7 @@ class TaskUpdate(BaseModel):
         ),
     )
     sub_tasks: list[SubTask] | None = Field(
-        default=None,
+        default=[],
         title="Sub Tasks",
         description="List of sub tasks",
     )

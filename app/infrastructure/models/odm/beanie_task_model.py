@@ -41,7 +41,7 @@ class BeanieTask(Document):
     priority: Priority = Priority.NO_PRIORITY
     is_archived: bool = False
     assigned_to: Link[BeanieUser] | None = None
-    sub_tasks: list[BeanieSubTask] = Field(default_factory=list)
+    sub_tasks: list[BeanieSubTask] = Field(default=[])
     due_date: datetime | None = Field(default_factory=lambda: datetime.now(tz=UTC))
     created_by: Link[BeanieUser]
     updated_by: Link[BeanieUser] | None = None
