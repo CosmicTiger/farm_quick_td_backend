@@ -3,6 +3,7 @@ from contextlib import suppress, asynccontextmanager
 from collections.abc import AsyncGenerator
 
 import uvicorn
+from mangum import Mangum
 from fastapi import Depends, FastAPI, Request
 from scalar_fastapi import get_scalar_api_reference
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -167,3 +168,6 @@ def start() -> None:
 
 if __name__ == "__main__":
     start()
+
+
+handler = Mangum(app)

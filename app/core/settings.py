@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     API_VERSION: str = Field(__version__)
     PROJECT_NAME: str = Field("Default Project Name")
     PROJECT_DESCRIPTION: str = Field("Default Project Description")
-    ENV: str = Field("development")
+    ENV: Literal["local", "development", "production"] = Field("development")
     HOST: str = Field("0.0.0.0")  # noqa: S104
     PORT: int = Field(8087)
     DEBUG: bool = Field(False)  # noqa: FBT003
