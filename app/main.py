@@ -148,6 +148,11 @@ def overridden_swagger(req: Request) -> HTMLResponse:
     )
 
 
+@app.get("/new-test-api")
+async def return_hello_world():
+    return {"message": "Hello World!"}
+
+
 app.include_router(router, prefix=get_settings().get_api_prefix)
 
 
@@ -168,6 +173,5 @@ def start() -> None:
 
 if __name__ == "__main__":
     start()
-
 
 handler = Mangum(app)

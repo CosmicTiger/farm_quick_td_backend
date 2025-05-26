@@ -3,14 +3,14 @@ name = "quick-td-backend"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
-  "bcrypt==4.0.1",
+  "bcrypt==4.3.0",
   "beanie>=1.29.0",
   "fastapi[standard]>=0.115.12",
   "mangum>=0.19.0",
   "passlib[bcrypt]>=1.7.4",
-  "pathlib>=1.0.1",
+  "pathlib2>=2.3.7.post1",
   "psutil>=7.0.0",
   "pydantic-config>=0.3.0",
   "pydantic-core>=2.33.1",

@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Tuple
 
 from psutil import disk_usage, cpu_percent, virtual_memory
 from pydantic import Field, AnyHttpUrl, field_validator
@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     LOGGER_FORMAT: str = Field(
         "%(asctime)s - line:%(lineno)d - %(name)s - %(levelname)s - %(message)s - %(funcName)s - %(pathname)s",
     )
-    LOGGER_FILE_NAME: str = Field("logger.log")
+    LOGGER_FILE_NAME: str = Field("/tmp/logger.log")
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -209,7 +209,7 @@ class Settings(BaseSettings):
 
     @field_validator("ALLOWED_CORS_ORIGIN", mode="before")
     @classmethod
-    def parse_allowed_cors_origin(cls, unparsed_string: str) -> list[Literal["*"] | AnyHttpUrl]:
+    def parse_allowed_cors_origin(cls, unparsed_string: Tuple[str, list]) -> list[Literal["*"] | AnyHttpUrl]:
         """parse_allowed_cors_origin _summary_
 
         _extended_summary_
@@ -219,6 +219,8 @@ class Settings(BaseSettings):
         :return: _description_
         :rtype: list[Literal["*"] | AnyHttpUrl]
         """
+        if type(unparsed_string) == list:
+            return unparsed_string
         try:
             if unparsed_string is None or unparsed_string in {"", "*"}:
                 return ["*"]
